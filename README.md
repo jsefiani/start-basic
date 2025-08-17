@@ -13,13 +13,8 @@ A modern React application built with TanStack Start, featuring internationaliza
    ```bash
    npm install
    ```
-
-2. **Compile translations**
-   ```bash
-   npm run lingui:compile
-   ```
-
-3. **Start development server**
+   
+2. **Start development server**
    ```bash
    npm run dev
    ```
