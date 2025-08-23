@@ -13,9 +13,9 @@
   "dependencies": {
     "@lingui/core": "^5.4.1",
     "@lingui/react": "^5.4.1",
-    "@tanstack/react-router": "^1.131.24",
-    "@tanstack/react-router-devtools": "^1.131.24",
-    "@tanstack/react-start": "^1.131.24",
+    "@tanstack/react-router": "^1.131.27",
+    "@tanstack/react-router-devtools": "^1.131.27",
+    "@tanstack/react-start": "^1.131.27",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.6.0",

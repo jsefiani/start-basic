@@ -1,21 +1,23 @@
-/// <reference types="vite/client" />
-import { I18n } from '@lingui/core'
+import type { I18n } from '@lingui/core'
+import { useLingui } from '@lingui/react'
 import {
-  HeadContent,
-  Link,
-  Scripts,
   createRootRouteWithContext,
+  HeadContent,
+  notFound,
+  Outlet,
+  redirect,
+  Scripts,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import * as React from 'react'
-import { DefaultCatchBoundary } from '~/components/DefaultCatchBoundary'
-import { NotFound } from '~/components/NotFound'
-import appCss from '~/styles/app.css?url'
-import { seo } from '~/utils/seo'
+import type { ReactNode } from 'react'
 
-export const Route = createRootRouteWithContext<{
+import { getLocale } from '../lib/lingui/get-locale'
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '../lib/lingui/i18n'
+
+type RouterContext = {
   i18n: I18n
-}>()({
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
       {
@@ -25,67 +27,75 @@ export const Route = createRootRouteWithContext<{
         name: 'viewport',
         content: 'width=device-width, initial-scale=1',
       },
-      ...seo({
-        title:
-          'TanStack Start | Type-Safe, Client-First, Full-Stack React Framework',
-        description: `TanStack Start is a type-safe, client-first, full-stack React framework. `,
-      }),
-    ],
-    links: [
-      { rel: 'stylesheet', href: appCss },
       {
-        rel: 'apple-touch-icon',
-        sizes: '180x180',
-        href: '/apple-touch-icon.png',
-      },
-      {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '32x32',
-        href: '/favicon-32x32.png',
-      },
-      {
-        rel: 'icon',
-        type: 'image/png',
-        sizes: '16x16',
-        href: '/favicon-16x16.png',
-      },
-      { rel: 'manifest', href: '/site.webmanifest', color: '#fffff' },
-      { rel: 'icon', href: '/favicon.ico' },
-    ],
-    scripts: [
-      {
-        src: '/customScript.js',
-        type: 'text/javascript',
+        title: 'A title',
       },
     ],
+    links: [],
   }),
-  errorComponent: DefaultCatchBoundary,
-  notFoundComponent: () => <NotFound />,
-  shellComponent: RootDocument,
+  notFoundComponent: () => <div>Not Found</div>,
+  beforeLoad: async ({ location, matches, context }) => {
+    if (
+      location.pathname.startsWith('/api/') ||
+      location.pathname.includes('.')
+    ) {
+      return
+    }
+
+    const localeMatch = matches.find(m => m.routeId === '/$locale/')
+    const searchStr = typeof location.search === 'string' ? location.search : ''
+
+    if (localeMatch?.params?.locale) {
+      const { locale } = localeMatch.params
+
+      if (!SUPPORTED_LOCALES.includes(locale)) {
+        throw notFound()
+      }
+    } else {
+      const segments = location.pathname.split('/').filter(Boolean)
+
+      if (segments.length === 0) {
+        const locale = await getLocale()
+
+        throw redirect({
+          href: `/${locale}${searchStr}`,
+          replace: true,
+        })
+      }
+
+      const [potentialLocale, ...restSegments] = segments
+
+      if (!SUPPORTED_LOCALES.includes(potentialLocale)) {
+        const restPath =
+          restSegments.length > 0 ? `/${restSegments.join('/')}` : ''
+        throw redirect({
+          href: `/${DEFAULT_LOCALE}${restPath}${searchStr}`,
+          replace: true,
+        })
+      }
+    }
+  },
+  component: RootComponent,
 })
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootComponent() {
   return (
-    <html>
+    <RootDocument>
+      <Outlet />
+    </RootDocument>
+  )
+}
+
+function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  const { i18n } = useLingui()
+
+  return (
+    <html lang={i18n.locale}>
       <head>
         <HeadContent />
       </head>
-      <body>
-        <div className="p-2 flex gap-2 text-lg">
-          <Link
-            to="/"
-            activeProps={{
-              className: 'font-bold',
-            }}
-            activeOptions={{ exact: true }}
-          >
-            Home
-          </Link>{' '}
-        </div>
-        <hr />
+      <body className="flex flex-col min-h-full grow">
         {children}
-        <TanStackRouterDevtools position="bottom-right" />
         <Scripts />
       </body>
     </html>

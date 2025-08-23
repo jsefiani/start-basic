@@ -11,11 +11,13 @@ export default defineConfig({
     tsConfigPaths({
       projects: ['./tsconfig.json'],
     }),
-    tanstackStart({ customViteReactPlugin: true }),
+    tanstackStart({ customViteReactPlugin: true, target: 'cloudflare-module' }),
     viteReact({
       babel: {
         plugins: ['@lingui/babel-plugin-lingui-macro'],
+        ignore: ['**/*.po'],
       },
+      exclude: ['**/*.po'],
     }),
   ],
 })
